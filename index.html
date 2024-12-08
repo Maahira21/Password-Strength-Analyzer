@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Password Strength Analyzer</h1>
+        <form id="passwordForm">
+            <label for="password">Enter your password here:</label><br>
+            <input type="password" id="password" name="password" required><br>
+            <button type="submit">Check Strength</button>
+        </form>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('passwordForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const password = document.getElementById('password').value;
+
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    // Add the appropriate class for password strength
+                    let strengthClass = '';
+                    if (data.strength === 'Very Weak') {
+                        strengthClass = 'very-weak';
+                    } else if (data.strength === 'Weak') {
+                        strengthClass = 'weak';
+                    } else if (data.strength === 'Moderate') {
+                        strengthClass = 'moderate';
+                    } else if (data.strength === 'Strong') {
+                        strengthClass = 'strong';
+                    }
+
+                    resultsDiv.innerHTML = `<p><strong>Password Strength:</strong> <span class="${strengthClass}">${data.strength}</span></p>
+                                            <ul>
+                                                ${data.recommendations.map(item => `<li>${item}</li>`).join('')}
+                                            </ul>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
